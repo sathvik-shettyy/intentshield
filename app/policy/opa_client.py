@@ -4,12 +4,20 @@ OPA_URL = "http://localhost:8181/v1/data/intentshield/allow"
 TIMEOUT = 2.0
 
 
-def check_policy(intent: str, category: str, risk_score: int) -> bool:
+def check_policy(
+    intent: str,
+    category: str,
+    risk_score: int,
+    user_id: str = "anonymous",
+    role: str = "user",
+) -> bool:
     payload = {
         "input": {
             "intent": intent,
             "category": category,
             "risk_score": risk_score,
+            "user_id": user_id,
+            "role": role,
         }
     }
     try:
