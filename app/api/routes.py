@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 from app.core.models import IntentRequest, IntentResponse
 from app.core.intent import generate_token, classify_intent, risk_score
+from app.policy.opa_client import check_policy
 
 router = APIRouter()
 
@@ -11,7 +12,8 @@ def process_intent(req: IntentRequest):
     risk = risk_score(req.intent)
     token = generate_token(req.intent)
 
-    decision = "allow" if risk < 80 else "deny"
+    allowed = check_policy(req.intent, category, risk)
+    decision = "allow" if allowed else "deny"
 
     return IntentResponse(
         intent_token=token,
