@@ -1,14 +1,12 @@
 from pydantic import BaseModel
-from typing import Optional, List
 
 class IntentRequest(BaseModel):
-    text: str
-    user_id: Optional[str] = None
+    intent: str
+    user_id: str | None = None
 
 
 class IntentResponse(BaseModel):
-    intent_class: str
     intent_token: str
+    category: str
     risk_score: int
-    allowed: bool
-    entities: List[str] = []
+    decision: str
