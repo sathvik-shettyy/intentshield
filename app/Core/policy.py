@@ -1,4 +1,4 @@
-def evaluate_policy(intent_class: str, risk_score: int) -> bool:
+def evaluate(intent_class: str, risk_score: int) -> bool:
     if intent_class == "data_deletion" and risk_score > 80:
         return False
 
