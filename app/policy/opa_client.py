@@ -1,7 +1,9 @@
 import httpx
 from fastapi import HTTPException
 
-from app.config import INTENTSHIELD_ENV, OPA_RETRY, OPA_TIMEOUT, OPA_URL
+from app.config import INTENTSHIELD_ENV, OPA_RETRY, OPA_TIMEOUT, OPA_URL, POLICY_VERSION
+from app.observability.context import get_correlation_id
+from app.observability.structured_logger import log_structured
 
 
 def check_policy(
@@ -18,17 +20,30 @@ def check_policy(
             "risk_score": risk_score,
             "user_id": user_id,
             "role": role,
+            "policy_version": POLICY_VERSION,
         }
     }
 
     last_error: Exception | None = None
-    for _ in range(OPA_RETRY + 1):
+    for attempt in range(OPA_RETRY + 1):
         try:
             with httpx.Client(timeout=OPA_TIMEOUT) as client:
                 response = client.post(OPA_URL, json=payload)
                 response.raise_for_status()
                 result = response.json().get("result")
                 if isinstance(result, bool):
+                    log_structured(
+                        "policy_evaluated",
+                        {
+                            "decision": "allow" if result else "deny",
+                            "category": category,
+                            "risk_score": risk_score,
+                            "user_id": user_id,
+                            "role": role,
+                            "policy_version": POLICY_VERSION,
+                            "correlation_id": get_correlation_id(),
+                        },
+                    )
                     return result
                 raise HTTPException(
                     status_code=502,
@@ -41,6 +56,14 @@ def check_policy(
             ) from exc
         except Exception as exc:
             last_error = exc
+            log_structured(
+                "policy_check_failed",
+                {
+                    "attempt": attempt,
+                    "error": str(exc),
+                    "correlation_id": get_correlation_id(),
+                },
+            )
 
     if INTENTSHIELD_ENV == "production":
         raise HTTPException(

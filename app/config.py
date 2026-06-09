@@ -18,6 +18,7 @@ OPA_URL = os.getenv(
 OPA_TIMEOUT = float(os.getenv("OPA_TIMEOUT", "2.0"))
 OPA_RETRY = int(os.getenv("OPA_RETRY", "1"))
 API_KEYS_FILE = Path(os.getenv("API_KEYS_FILE", "data/api_keys.json"))
+POLICY_VERSION = os.getenv("POLICY_VERSION", "v1")
 
 DEFAULT_IDENTITY = {"user_id": "anonymous", "role": "user"}
 
